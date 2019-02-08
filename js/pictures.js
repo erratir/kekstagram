@@ -103,6 +103,12 @@ function renderPicture() {
 
 }
 
+/**
+ * Функция создает HTML элемент, по переданным tagName и className
+ * @param {string} tagName
+ * @param {string} className
+ * @return {HTMLElement}
+ */
 let makeElement = function (tagName, className) {
   let element = document.createElement(tagName);
   element.classList.add(className);
@@ -133,7 +139,12 @@ function renderBigPicture(picture) {
   bigPicture.querySelector(`.likes-count`).textContent = picture.likes;
   bigPicture.querySelector(`.comments-count`).textContent = picture.commentsCount;
 
-  // генерим комеентарии к большой картинке | 2 первых комента в HTML прописанны TODO удалить первые 2 комента из html
+  // 2 первых комента прописанны в HTML | Удалим все <li>
+  while (commentsList.firstChild) {
+    commentsList.removeChild(commentsList.firstChild);
+  }
+
+  // генерим комеентарии к большой картинке вместо удаленных | можно как в проекте букинг было копировать
   for (let i = 0; i < picture.commentsCount; i++) {
     let li = makeElement(`li`, `social__comment`);
     let imgAvatar = makeElement(`img`, `social__picture`);
