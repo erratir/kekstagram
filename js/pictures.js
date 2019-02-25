@@ -1,4 +1,4 @@
-/* global document: false */
+/* global window, document: false */
 let DataPicture = {
   COUNT: 25,
   MIN_LIKES: 15,
@@ -169,8 +169,106 @@ function hideElement() {
   bigPicture.querySelector(`.comments-loader`).classList.add(`visually-hidden`);
 }
 
+/**
+ * --------------------------------------------- module4-task1 ---------------------------------------------
+ */
+
+/**
+ *  Класс описывает редактор загружаемых изображений
+ *  */
+let PictureUploader = function PictureUploader() {
+  this.element = document.querySelector(`.img-upload`);
+  this.uploadOverlay = this.element.querySelector(`.img-upload__overlay`);
+  this.uploadOverlayHideButton = this.element.querySelector(`.img-upload__cancel`);
+  this.inputFile = this.element.querySelector(`#upload-file`);
+  this.picture = this.element.querySelector(`.img-upload__preview img`);
+
+};
+
+/**
+ * Показать редактора загружаемых изображений
+ */
+PictureUploader.prototype.show = function () {
+  this.uploadOverlay.classList.remove(`hidden`);
+};
+
+/**
+ * Скрыть редактор загружаемых изображений
+ */
+PictureUploader.prototype.hide = function () {
+  this.uploadOverlay.classList.add(`hidden`);
+  this.inputFile.value = ``;
+};
+
+/**
+ * Загружает изображение из файла в виде base64
+ * @param {File} file файл с изображением
+ * @param {Function} cb callback(err, base64image)
+ */
+PictureUploader.prototype.loadImage = function (file, cb) {
+  if (file.type.indexOf(`image/`) !== 0) {
+    cb(new Error(`FILE_NOT_IMAGE`));
+    return;
+  }
+
+  cb(null, window.URL.createObjectURL(file));
+};
+
+/**
+ * Объявляем функции обработчиков событий
+ */
+PictureUploader.prototype.bindEvents = function () {
+  if (this.__eventsBinded__) {
+    return;
+  }
+  this.__eventsBinded__ = true;
+
+  this.bindPopupEvents();
+};
+
+/**
+ * Обработчики событий Popup окна
+ */
+PictureUploader.prototype.bindPopupEvents = function () {
+  let $this = this;
+  // Открываем попап
+  this.inputFile.addEventListener(`change`, function (evt) {
+    evt.preventDefault();
+    if ($this.inputFile.files.length > 0) {
+      $this.loadImage($this.inputFile.files[0], function (err, imgURL) {
+        if (err) {
+          // TODO: show error
+          return;
+        }
+        $this.picture.src = imgURL;
+        $this.show();
+      });
+    }
+  });
+
+  // Закрываем попап
+  this.uploadOverlayHideButton.addEventListener(`click`, function (evt) {
+    evt.preventDefault();
+    evt.stopPropagation();
+    $this.hide();
+  });
+
+  // Закрываем попап
+  window.addEventListener(`keydown`, function (evt) {
+    if (evt.key === `Escape`) {
+      evt.preventDefault();
+      $this.hide();
+    }
+  });
+};
+
+/*
+ * Основной код программы
+ */
 for (let i = 1; i <= DataPicture.COUNT; i++) {
   pictures.push(new Picture(i));
 }
 renderPicture();
-renderBigPicture(pictures[0]);
+// renderBigPicture(pictures[0]);
+let pictureUploader = new PictureUploader();
+pictureUploader.bindEvents();
