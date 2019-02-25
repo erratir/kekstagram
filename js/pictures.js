@@ -183,6 +183,11 @@ let PictureUploader = function PictureUploader() {
   this.inputFile = this.element.querySelector(`#upload-file`);
   this.picture = this.element.querySelector(`.img-upload__preview img`);
 
+  this.effectLevelPin = this.element.querySelector(`.effect-level__pin`);
+  this.effectLevelLine = this.element.querySelector(`.effect-level__line`);
+  this.effectLevel = this.element.querySelector(`.effect-level__value`);
+  this.effectsList = this.element.querySelector(`.effects__list`);
+
 };
 
 /**
@@ -198,6 +203,8 @@ PictureUploader.prototype.show = function () {
 PictureUploader.prototype.hide = function () {
   this.uploadOverlay.classList.add(`hidden`);
   this.inputFile.value = ``;
+  this.picture.src = `img/upload-default-image.jpg`; // вернем картинку по умаолчанию
+  this.picture.removeAttribute(`class`); // сбросим примененные ранее эфекты
 };
 
 /**
@@ -224,6 +231,7 @@ PictureUploader.prototype.bindEvents = function () {
   this.__eventsBinded__ = true;
 
   this.bindPopupEvents();
+  this.bindEffectEvents();
 };
 
 /**
@@ -259,6 +267,50 @@ PictureUploader.prototype.bindPopupEvents = function () {
       evt.preventDefault();
       $this.hide();
     }
+  });
+};
+
+/**
+ * Функция isCheck возвращает чекнутый радиобаттон (type="radio")
+ * @param {string} name
+ * @return {Element}
+ */
+PictureUploader.prototype.isCheck = function (name) {
+  return this.uploadOverlay.querySelector(`input[name="${name}"]:checked`);
+};
+
+/**
+ * Устанавливает выбранный эффект для загружаемого изображения (присваивая соответсвующий класс)
+ */
+PictureUploader.prototype.setEffect = function () {
+  let effect = this.isCheck(`effect`);
+  this.picture.className = `effects__preview--${effect.value}`;
+};
+
+/**
+ * Вычисляет уровень эффекта, в зависимости от положения ползунка на линии
+ * И изменяет его значение по умолчанию (name="effect-level" value="20")
+ */
+PictureUploader.prototype.effectLevelCalculate = function () {
+  let maxValue = this.effectLevelLine.offsetWidth;
+  let value = this.effectLevelPin.offsetLeft; // возвращает смещение в пикселях верхнего левого угла текущего элемента от родительского HTMLElement.offsetParent узла
+  this.effectLevel.setAttribute(`value`, `${Math.round(100 * value / maxValue)}`);
+};
+
+/**
+ * Обработчики событий кнопок применения эффектов
+ */
+PictureUploader.prototype.bindEffectEvents = function () {
+  let $this = this;
+  // При отпускании ползунка, записываем значение уровня насыщенности в соответствующий input
+  this.effectLevelPin.addEventListener(`mouseup`, function (evt) {
+    evt.preventDefault();
+    $this.effectLevelCalculate();
+  });
+
+  // При клике по предпросмотру эффекта, применяем к картинке соответствующий
+  this.effectsList.addEventListener(`click`, function () {
+    $this.setEffect();
   });
 };
 
