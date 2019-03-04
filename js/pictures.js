@@ -13,8 +13,6 @@ let DataPicture = {
 
 let picturesList = document.querySelector(`.pictures`);
 let pictureTemplate = document.querySelector(`#picture`).content;
-let bigPicture = document.querySelector(`.big-picture`);
-let commentsList = bigPicture.querySelector(`.social__comments`);
 let pictures = [];
 
 /**
@@ -23,6 +21,7 @@ let pictures = [];
  * @constructor
  */
 function Picture(i) {
+  this.id = i;
   this.url = `photos/${i}.jpg`;
   // cлучайное число от 15 до 200
   this.likes = getRandomInRange(DataPicture.MIN_LIKES, DataPicture.MAX_LIKES);
@@ -75,6 +74,7 @@ function generateRandomComments(commentsCount) {
  *    Количество лайков likes подставьте как текстовое содержание элемента .picture__likes.
  *    Количество комментариев comments подставьте как текстовое содержание элемента .picture__comments.
  * @param {object} pic
+ * @param {number} pic.id
  * @param {string} pic.url
  * @param {string} pic.likes
  * @param {string} pic.commentsCount
@@ -83,6 +83,7 @@ function generateRandomComments(commentsCount) {
 function createCloneTemplate(pic) {
   let clonePictureTemplate = pictureTemplate.cloneNode(true);
   clonePictureTemplate.querySelector(`.picture__img`).src = pic.url;
+  clonePictureTemplate.querySelector(`.picture__img`).id = pic.id.toString();
   clonePictureTemplate.querySelector(`.picture__likes`).textContent = pic.likes;
   clonePictureTemplate.querySelector(`.picture__comments`).textContent = pic.commentsCount;
   return clonePictureTemplate;
@@ -116,67 +117,79 @@ let makeElement = function (tagName, className) {
 };
 
 /**
- * 4. Покажите элемент .big-picture, удалив у него класс .hidden и заполните
- * его данными из первого элемента сгенерированного вами массива:
- *  - Адрес изображения url подставьте как src изображения внутри блока.big-picture__img.
- *  - Количество лайков likes подставьте как текстовое содержание элемента .likes-count.
- *  - Количество комментариев comments подставьте как текстовое содержание элемента .comments-count.
- *  - Список комментариев под фотографией: коментарии должны вставляться в блок .social__comments. Разметка каждого
- *  комментария должна выглядеть так:
- *  <li class="social__comment">
- *    <img class="social__picture" src="img/avatar-{{случайное число от 1 до 6}}.svg" alt="Аватар комментатора фотографии" width="35" height="35">
- *    <p class="social__text">{{текст комментария}}</p>
- *  </li>
- *  - Описание фотографии description вставьте строкой в блок .social__caption.
- *
- * @param {object} picture
+ * Объект - попап с большой картинкой, коментами, лайками и т.д.
+ * @type {{}}
  */
-function renderBigPicture(picture) {
-  let fragment = document.createDocumentFragment();
-  bigPicture.classList.remove(`hidden`);
-  bigPicture.querySelector(`.big-picture__img img`).src = picture.url;
-  bigPicture.querySelector(`.social__header .social__caption`).textContent = picture.description;
-  bigPicture.querySelector(`.likes-count`).textContent = picture.likes;
-  bigPicture.querySelector(`.comments-count`).textContent = picture.commentsCount;
+let BigPictureRender = {
+  /**
+   * 4. Покажите элемент .big-picture, удалив у него класс .hidden и заполните
+   * его данными из первого элемента сгенерированного вами массива:
+   *  - Адрес изображения url подставьте как src изображения внутри блока.big-picture__img.
+   *  - Количество лайков likes подставьте как текстовое содержание элемента .likes-count.
+   *  - Количество комментариев comments подставьте как текстовое содержание элемента .comments-count.
+   *  - Список комментариев под фотографией: коментарии должны вставляться в блок .social__comments. Разметка каждого
+   *  комментария должна выглядеть так:
+   *  <li class="social__comment">
+   *    <img class="social__picture" src="img/avatar-{{случайное число от 1 до 6}}.svg" alt="Аватар комментатора фотографии" width="35" height="35">
+   *    <p class="social__text">{{текст комментария}}</p>
+   *  </li>
+   *  - Описание фотографии description вставьте строкой в блок .social__caption.
+   *
+   * @param {object} picture
+   */
+  element: document.querySelector(`.big-picture`),
 
-  // 2 первых комента прописанны в HTML | Удалим все <li>
-  while (commentsList.firstChild) {
-    commentsList.removeChild(commentsList.firstChild);
+  renderPreview(picture) {
+    this.element.querySelector(`.big-picture__img img`).src = picture.url;
+    this.element.querySelector(`.social__header .social__caption`).textContent = picture.description;
+    this.element.querySelector(`.likes-count`).textContent = picture.likes;
+    this.element.querySelector(`.comments-count`).textContent = picture.commentsCount;
+
+    /**
+     * 5.  Спрячьте блоки счётчика комментариев .social__comment-count и загрузки
+     новых комментариев .comments-loader, добавив им класс .visually-
+     hidden.
+     */
+    this.element.querySelector(`.social__comment-count`).classList.add(`visually-hidden`);
+    this.element.querySelector(`.comments-loader`).classList.add(`visually-hidden`);
+  },
+
+  renderComments(picture) {
+    let fragment = document.createDocumentFragment();
+    let commentsList = this.element.querySelector(`.social__comments`);
+    // 2 первых комента прописанны в HTML | Удалим все <li>
+    while (commentsList.firstChild) {
+      commentsList.removeChild(commentsList.firstChild);
+    }
+    // генерим комеентарии к большой картинке вместо удаленных | можно как в проекте букинг было копировать
+    for (let i = 0; i < picture.commentsCount; i++) {
+      let li = makeElement(`li`, `social__comment`);
+      let imgAvatar = makeElement(`img`, `social__picture`);
+      imgAvatar.src = `img/avatar-${getRandomInRange(DataPicture.MIN_AVATAR_NUM, DataPicture.MAX_AVATAR_NUM)}.svg`;
+      let textComment = makeElement(`p`, `social__text`);
+      textComment.textContent = picture.comments[i];
+      li.appendChild(imgAvatar);
+      li.appendChild(textComment);
+      fragment.appendChild(li);
+    }
+    commentsList.appendChild(fragment);
+  },
+
+  show(picture) {
+    this.renderPreview(picture);
+    this.renderComments(picture);
+    this.element.classList.remove(`hidden`);
   }
-
-  // генерим комеентарии к большой картинке вместо удаленных | можно как в проекте букинг было копировать
-  for (let i = 0; i < picture.commentsCount; i++) {
-    let li = makeElement(`li`, `social__comment`);
-    let imgAvatar = makeElement(`img`, `social__picture`);
-    imgAvatar.src = `img/avatar-${getRandomInRange(DataPicture.MIN_AVATAR_NUM, DataPicture.MAX_AVATAR_NUM)}.svg`;
-    let textComment = makeElement(`p`, `social__text`);
-    textComment.textContent = picture.comments[i];
-    li.appendChild(imgAvatar);
-    li.appendChild(textComment);
-    fragment.appendChild(li);
-  }
-  commentsList.appendChild(fragment);
-  hideElement();
-}
-
-/**
- * 5.  Спрячьте блоки счётчика комментариев .social__comment-count и загрузки
- новых комментариев .comments-loader, добавив им класс .visually-
- hidden.
- */
-function hideElement() {
-  bigPicture.querySelector(`.social__comment-count`).classList.add(`visually-hidden`);
-  bigPicture.querySelector(`.comments-loader`).classList.add(`visually-hidden`);
-}
+};
 
 /**
  * --------------------------------------------- module4-task1 ---------------------------------------------
  */
 
 /**
- *  Класс описывает редактор загружаемых изображений
+ *  Класс конструктор описывает редактор загружаемых изображений
  *  */
-let PictureUploader = function PictureUploader() {
+let PictureUploader = function () {
   this.element = document.querySelector(`.img-upload`);
   this.uploadOverlay = this.element.querySelector(`.img-upload__overlay`);
   this.uploadOverlayHideButton = this.element.querySelector(`.img-upload__cancel`);
@@ -192,7 +205,7 @@ let PictureUploader = function PictureUploader() {
 };
 
 /**
- * Класс описывает применяемые CSS фильтры
+ * Объект описывает применяемые CSS фильтры
  * @type {{chrome: {CSS_NAME: string, MIN_VALUE: number, MAX_VALUE: number, UNIT: string}, sepia: {CSS_NAME: string, MIN_VALUE: number, MAX_VALUE: number, UNIT: string}, marvin: {CSS_NAME: string, MIN_VALUE: number, MAX_VALUE: number, UNIT: string}, phobos: {CSS_NAME: string, MIN_VALUE: number, MAX_VALUE: number, UNIT: string}, heat: {CSS_NAME: string, MIN_VALUE: number, MAX_VALUE: number, UNIT: string}}}
  */
 PictureUploader.prototype.cssFilter = {
