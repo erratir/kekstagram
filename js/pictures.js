@@ -183,11 +183,49 @@ let PictureUploader = function PictureUploader() {
   this.inputFile = this.element.querySelector(`#upload-file`);
   this.picture = this.element.querySelector(`.img-upload__preview img`);
 
+  this.slider = this.element.querySelector(`.img-upload__effect-level`);
   this.effectLevelPin = this.element.querySelector(`.effect-level__pin`);
   this.effectLevelLine = this.element.querySelector(`.effect-level__line`);
   this.effectLevel = this.element.querySelector(`.effect-level__value`);
   this.effectsList = this.element.querySelector(`.effects__list`);
 
+};
+
+/**
+ * Класс описывает применяемые CSS фильтры
+ * @type {{chrome: {CSS_NAME: string, MIN_VALUE: number, MAX_VALUE: number, UNIT: string}, sepia: {CSS_NAME: string, MIN_VALUE: number, MAX_VALUE: number, UNIT: string}, marvin: {CSS_NAME: string, MIN_VALUE: number, MAX_VALUE: number, UNIT: string}, phobos: {CSS_NAME: string, MIN_VALUE: number, MAX_VALUE: number, UNIT: string}, heat: {CSS_NAME: string, MIN_VALUE: number, MAX_VALUE: number, UNIT: string}}}
+ */
+PictureUploader.prototype.cssFilter = {
+  chrome: {
+    CSS_NAME: `grayscale`,
+    MIN_VALUE: 0,
+    MAX_VALUE: 1,
+    UNIT: ``,
+  },
+  sepia: {
+    CSS_NAME: `sepia`,
+    MIN_VALUE: 0,
+    MAX_VALUE: 1,
+    UNIT: ``,
+  },
+  marvin: {
+    CSS_NAME: `invert`,
+    MIN_VALUE: 0,
+    MAX_VALUE: 100,
+    UNIT: `%`,
+  },
+  phobos: {
+    CSS_NAME: `blur`,
+    MIN_VALUE: 0,
+    MAX_VALUE: 3,
+    UNIT: `px`,
+  },
+  heat: {
+    CSS_NAME: `brightness`,
+    MIN_VALUE: 0,
+    MAX_VALUE: 3,
+    UNIT: ``,
+  }
 };
 
 /**
@@ -283,8 +321,16 @@ PictureUploader.prototype.isCheck = function (name) {
  * Устанавливает выбранный эффект для загружаемого изображения (присваивая соответсвующий класс)
  */
 PictureUploader.prototype.setEffect = function () {
-  let effect = this.isCheck(`effect`);
-  this.picture.className = `effects__preview--${effect.value}`;
+  this.effect = this.isCheck(`effect`);
+  this.picture.className = `effects__preview--${this.effect.value}`;
+  this.effectLevel.setAttribute(`value`, `20`); // при переключении эффекта сбросить значение в соответсвующем инпуте
+  this.picture.removeAttribute(`style`); // при переключении эффекта сбросить CSS фильтры у картинки
+  // ТЗ: При выборе эффекта «Оригинал» слайдер скрывается.
+  if (this.effect.value === `none`) {
+    this.slider.classList.add(`hidden`);
+  } else {
+    this.slider.classList.remove(`hidden`);
+  }
 };
 
 /**
@@ -294,7 +340,17 @@ PictureUploader.prototype.setEffect = function () {
 PictureUploader.prototype.effectLevelCalculate = function () {
   let maxValue = this.effectLevelLine.offsetWidth;
   let value = this.effectLevelPin.offsetLeft; // возвращает смещение в пикселях верхнего левого угла текущего элемента от родительского HTMLElement.offsetParent узла
-  this.effectLevel.setAttribute(`value`, `${Math.round(100 * value / maxValue)}`);
+  this.effectLevelValue = Math.round(100 * value / maxValue);
+  this.effectLevel.setAttribute(`value`, `${this.effectLevelValue}`);
+  // Нужно получить выражение вида: this.picture.style.filter = `grayscale(0.4)`
+  if (this.effect.value !== `none`) { // effect-none
+    let cssFilterName = this.cssFilter[`${this.effect.value}`].CSS_NAME;
+    // this.effectLevelValue - у нас в процентах. Соответсыенно чтобы получить заданное значение фильтра: МаксЗначение фильтра * x% / 100
+    let cssFilterValue = this.cssFilter[`${this.effect.value}`].MAX_VALUE * this.effectLevelValue / 100;
+    let cssUnit = this.cssFilter[`${this.effect.value}`].UNIT;
+    this.picture.style.filter = `${cssFilterName}(${cssFilterValue}${cssUnit})`;
+  }
+
 };
 
 /**
