@@ -21,7 +21,7 @@ let pictures = [];
  * @constructor
  */
 function Picture(i) {
-  this.id = i;
+  this.id = i - 1;
   this.url = `photos/${i}.jpg`;
   // cлучайное число от 15 до 200
   this.likes = getRandomInRange(DataPicture.MIN_LIKES, DataPicture.MAX_LIKES);
@@ -83,7 +83,7 @@ function generateRandomComments(commentsCount) {
 function createCloneTemplate(pic) {
   let clonePictureTemplate = pictureTemplate.cloneNode(true);
   clonePictureTemplate.querySelector(`.picture__img`).src = pic.url;
-  clonePictureTemplate.querySelector(`.picture__img`).id = pic.id.toString();
+  clonePictureTemplate.querySelector(`.picture__img`).dataset.id = pic.id.toString();
   clonePictureTemplate.querySelector(`.picture__likes`).textContent = pic.likes;
   clonePictureTemplate.querySelector(`.picture__comments`).textContent = pic.commentsCount;
   return clonePictureTemplate;
@@ -99,7 +99,6 @@ function renderPicture() {
   for (let i = 0; i < DataPicture.COUNT; i++) {
     fragment.appendChild(createCloneTemplate(pictures[i]));
   }
-  // picturesList.appendChild(document.createTextNode(`test text TEST`));
   picturesList.appendChild(fragment); // Присоединяем фрагмент к основному дереву. В основном дереве фрагмент буден заменён собственными дочерними элементами.
 
 }
@@ -191,15 +190,15 @@ let BigPictureRender = {
     }
     this.__eventsBinded__ = true;
 
-    this.element.querySelector(`.big-picture__cancel`).addEventListener(`click`, function (ev) {
-      ev.preventDefault();
-      ev.stopPropagation();
+    this.element.querySelector(`.big-picture__cancel`).addEventListener(`click`, function (evt) {
+      evt.preventDefault();
+      evt.stopPropagation();
       $this.hide();
     });
 
-    window.addEventListener(`keydown`, function (ev) {
-      if (ev.key === `Escape`) {
-        ev.preventDefault();
+    window.addEventListener(`keydown`, function (evt) {
+      if (evt.key === `Escape`) {
+        evt.preventDefault();
 
         $this.hide();
       }
@@ -419,4 +418,36 @@ PictureUploader.prototype.bindEffectEvents = function () {
   let pictureUploader = new PictureUploader();
   pictureUploader.bindEvents();
   BigPictureRender.bindEvents();
+
+
+  /**
+   *  Показ изображения в полноэкранном режиме
+   */
+
+  let pictureClickHandler = function (evt) {
+    let target = evt.target;
+
+    if (target.className === `picture__img`) { // если кликнули по картинке, то рендерем BigPicture с таким ID
+
+      BigPictureRender.show(pictures[target.dataset.id]);
+
+    } else if (target.className === `picture__comments`) { // todo когда будем обрабатывать коменты
+
+    } else if (target.className === `picture__likes`) { // todo когда будем обрабатывать лайки
+    }
+
+  };
+  let pictureEnterPressHandler = function (evt) {
+    if (evt.key === `Enter`) {
+      let target = evt.target;
+
+      if (target.firstElementChild && target.firstElementChild.className === `picture__img`) {
+        // если кликнули по <a> ребенок которой - наша картинка, то рендерем BigPicture с таким ID
+        BigPictureRender.show(pictures[target.firstElementChild.dataset.id]);
+      }
+    }
+  };
+  picturesList.addEventListener(`click`, pictureClickHandler);
+  picturesList.addEventListener(`keydown`, pictureEnterPressHandler);
+
 })();
