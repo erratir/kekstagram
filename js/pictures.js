@@ -179,6 +179,31 @@ let BigPictureRender = {
     this.renderPreview(picture);
     this.renderComments(picture);
     this.element.classList.remove(`hidden`);
+  },
+
+  hide() {
+    this.element.classList.add(`hidden`);
+  },
+  bindEvents() {
+    let $this = this;
+    if (this.__eventsBinded__) {
+      return;
+    }
+    this.__eventsBinded__ = true;
+
+    this.element.querySelector(`.big-picture__cancel`).addEventListener(`click`, function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      $this.hide();
+    });
+
+    window.addEventListener(`keydown`, function (ev) {
+      if (ev.key === `Escape`) {
+        ev.preventDefault();
+
+        $this.hide();
+      }
+    });
   }
 };
 
@@ -386,10 +411,12 @@ PictureUploader.prototype.bindEffectEvents = function () {
 /*
  * Основной код программы
  */
-for (let i = 1; i <= DataPicture.COUNT; i++) {
-  pictures.push(new Picture(i));
-}
-renderPicture();
-// renderBigPicture(pictures[0]);
-let pictureUploader = new PictureUploader();
-pictureUploader.bindEvents();
+(function () {
+  for (let i = 1; i <= DataPicture.COUNT; i++) {
+    pictures.push(new Picture(i));
+  }
+  renderPicture();
+  let pictureUploader = new PictureUploader();
+  pictureUploader.bindEvents();
+  BigPictureRender.bindEvents();
+})();
