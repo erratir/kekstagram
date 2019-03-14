@@ -226,6 +226,9 @@ let PictureUploader = function () {
   this.effectLevel = this.element.querySelector(`.effect-level__value`);
   this.effectsList = this.element.querySelector(`.effects__list`);
 
+  this.buttonScaleSmaller = this.element.querySelector(`.scale__control--smaller`);
+  this.buttonScaleBigger = this.element.querySelector(`.scale__control--bigger`);
+  this.scaleControlInput = this.element.querySelector(`.scale__control--value`);
 };
 
 /**
@@ -280,6 +283,8 @@ PictureUploader.prototype.hide = function () {
   this.inputFile.value = ``;
   this.picture.src = `img/upload-default-image.jpg`; // вернем картинку по умаолчанию
   this.picture.removeAttribute(`class`); // сбросим примененные ранее эфекты
+  this.scaleControlInput.setAttribute(`value`, `100%`); // сбросить значение масштаба в инпут
+  this.picture.removeAttribute(`style`); // сбросить применный  ранее масштаб
 };
 
 /**
@@ -307,6 +312,7 @@ PictureUploader.prototype.bindEvents = function () {
 
   this.bindPopupEvents();
   this.bindEffectEvents();
+  this.bindResizeEvents();
 };
 
 /**
@@ -362,6 +368,8 @@ PictureUploader.prototype.setEffect = function () {
   this.picture.className = `effects__preview--${this.effect.value}`;
   this.effectLevel.setAttribute(`value`, `20`); // при переключении эффекта сбросить значение в соответсвующем инпуте
   this.picture.removeAttribute(`style`); // при переключении эффекта сбросить CSS фильтры у картинки
+  this.scaleControlInput.setAttribute(`value`, `100%`); // при переключении эффекта сбросить значение масштаба в инпут
+
   // ТЗ: При выборе эффекта «Оригинал» слайдер скрывается.
   if (this.effect.value === `none`) {
     this.slider.classList.add(`hidden`);
@@ -404,6 +412,44 @@ PictureUploader.prototype.bindEffectEvents = function () {
   // При клике по предпросмотру эффекта, применяем к картинке соответствующий
   this.effectsList.addEventListener(`click`, function () {
     $this.setEffect();
+  });
+};
+
+/**
+ * Изменяет размер загружаемого изображения
+ * @param {HTMLElement} button
+ */
+PictureUploader.prototype.resize = function (button) {
+  let Scale = {
+    STEP: 25,
+    MIN: 25,
+    MAX: 100,
+  };
+
+  this.scaleControlInput = this.element.querySelector(`.scale__control--value`);
+  this.scaleControlValue = parseInt(this.scaleControlInput.getAttribute(`value`), 10);
+
+  if (button === this.buttonScaleSmaller && this.scaleControlValue > Scale.MIN) {
+    this.scaleControlValue -= Scale.STEP;
+  } else if (button === this.buttonScaleBigger && this.scaleControlValue < Scale.MAX) {
+    this.scaleControlValue += Scale.STEP;
+  }
+
+  this.scaleControlInput.setAttribute(`value`, `${this.scaleControlValue}`);
+  this.picture.style.transform = `scale(${this.scaleControlValue / 100})`;
+
+};
+
+/**
+ * Обработчики событий для кнопок изменения размера изображения
+ */
+PictureUploader.prototype.bindResizeEvents = function () {
+  let $this = this;
+  this.buttonScaleSmaller.addEventListener(`click`, function () {
+    $this.resize($this.buttonScaleSmaller);
+  });
+  this.buttonScaleBigger.addEventListener(`click`, function () {
+    $this.resize($this.buttonScaleBigger);
   });
 };
 
