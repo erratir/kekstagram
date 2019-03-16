@@ -229,6 +229,8 @@ let PictureUploader = function () {
   this.buttonScaleSmaller = this.element.querySelector(`.scale__control--smaller`);
   this.buttonScaleBigger = this.element.querySelector(`.scale__control--bigger`);
   this.scaleControlInput = this.element.querySelector(`.scale__control--value`);
+  this.hashtagsInput = this.element.querySelector(`.text__hashtags`);
+  this.pictureDescription = this.element.querySelector(`.text__description`);
 };
 
 /**
@@ -342,9 +344,14 @@ PictureUploader.prototype.bindPopupEvents = function () {
     $this.hide();
   });
 
-  // Закрываем попап
+  /**
+   * Закрываем попап. Если фокус находится в поле ввода хэш-тега (или в поле ввода комментария),
+   * нажатие на Esc не должно приводить к закрытию формы редактирования изображения.
+    */
   window.addEventListener(`keydown`, function (evt) {
-    if (evt.key === `Escape`) {
+    if (evt.key === `Escape` &&
+      $this.hashtagsInput !== document.activeElement &&
+      $this.pictureDescription !== document.activeElement) {
       evt.preventDefault();
       $this.hide();
     }
@@ -452,6 +459,11 @@ PictureUploader.prototype.bindResizeEvents = function () {
     $this.resize($this.buttonScaleBigger);
   });
 };
+
+/**
+ * --------------------------------------------- module4-task2 ---------------------------------------------
+ */
+
 
 /*
  * Основной код программы
