@@ -233,6 +233,7 @@ let PictureUploader = function () {
   this.slider = this.element.querySelector(`.img-upload__effect-level`);
   this.effectLevelPin = this.element.querySelector(`.effect-level__pin`);
   this.effectLevelLine = this.element.querySelector(`.effect-level__line`);
+  this.effectLevelDepth = this.element.querySelector(`.effect-level__depth`);
   this.effectLevel = this.element.querySelector(`.effect-level__value`);
   this.effectsList = this.element.querySelector(`.effects__list`);
 
@@ -241,6 +242,8 @@ let PictureUploader = function () {
   this.scaleControlInput = this.element.querySelector(`.scale__control--value`);
   this.hashtagsInput = this.element.querySelector(`.text__hashtags`);
   this.pictureDescription = this.element.querySelector(`.text__description`);
+  this.EFFECT_DEFAULT_LEVEL_VALUE = 20; // значение по умолчанию - уровень эффекта
+  this.effectLevelValue = this.EFFECT_DEFAULT_LEVEL_VALUE; // значение по умолчанию - уровень эффекта
 };
 
 /**
@@ -285,6 +288,7 @@ PictureUploader.prototype.cssFilter = {
  */
 PictureUploader.prototype.show = function () {
   this.uploadOverlay.classList.remove(`hidden`);
+  this.slider.classList.add(`hidden`); // скрыть слайдер при первоначальной загрузке
 };
 
 /**
@@ -384,8 +388,10 @@ PictureUploader.prototype.isCheck = function (name) {
 PictureUploader.prototype.setEffect = function () {
   this.effect = this.isCheck(`effect`);
   this.picture.className = `effects__preview--${this.effect.value}`;
-  this.effectLevel.setAttribute(`value`, `20`); // при переключении эффекта сбросить значение в соответсвующем инпуте
+  this.effectLevel.setAttribute(`value`, `${this.EFFECT_DEFAULT_LEVEL_VALUE}`); // при переключении эффекта сбросить значение в соответсвующем инпуте
   this.picture.removeAttribute(`style`); // при переключении эффекта сбросить CSS фильтры у картинки
+  this.effectLevelPin.removeAttribute(`style`); // при переключении эффекта сбросить CSS фильтры у пина слайдера
+  this.effectLevelDepth.removeAttribute(`style`); // при переключении эффекта сбросить CSS фильтры у полоски заполнения слайдера
   this.scaleControlInput.setAttribute(`value`, `100%`); // при переключении эффекта сбросить значение масштаба в инпут
 
   // ТЗ: При выборе эффекта «Оригинал» слайдер скрывается.
@@ -400,10 +406,7 @@ PictureUploader.prototype.setEffect = function () {
  * Вычисляет уровень эффекта, в зависимости от положения ползунка на линии
  * И изменяет его значение по умолчанию (name="effect-level" value="20")
  */
-PictureUploader.prototype.effectLevelCalculate = function () {
-  let maxValue = this.effectLevelLine.offsetWidth;
-  let value = this.effectLevelPin.offsetLeft; // возвращает смещение в пикселях верхнего левого угла текущего элемента от родительского HTMLElement.offsetParent узла
-  this.effectLevelValue = Math.round(100 * value / maxValue);
+PictureUploader.prototype.setEffectLevel = function () {
   this.effectLevel.setAttribute(`value`, `${this.effectLevelValue}`);
   // Нужно получить выражение вида: this.picture.style.filter = `grayscale(0.4)`
   if (this.effect.value !== `none`) { // effect-none
@@ -421,10 +424,51 @@ PictureUploader.prototype.effectLevelCalculate = function () {
  */
 PictureUploader.prototype.bindEffectEvents = function () {
   let $this = this;
-  // При отпускании ползунка, записываем значение уровня насыщенности в соответствующий input
-  this.effectLevelPin.addEventListener(`mouseup`, function (evt) {
+
+  //  Только при вызове обработчика mousedown - обработчики mousemove и mouseup должны добавляться
+  this.effectLevelPin.addEventListener(`mousedown`, function (evt) {
     evt.preventDefault();
-    $this.effectLevelCalculate();
+    evt.stopPropagation();
+    let dragged = false;
+
+    let sliderLeftCoordX = $this.effectLevelLine.getBoundingClientRect().left;
+    let sliderWidth = $this.effectLevelLine.getBoundingClientRect().width;
+
+    let onMouseMove = function (moveEvt) {
+      moveEvt.preventDefault();
+      dragged = true;
+
+      // текущая координата X мышки (пина при перетаскивании) относительно левой кординаты X полоски слайдера
+      let newCoordX = moveEvt.clientX - sliderLeftCoordX;
+
+      // Процентное соотношение положения мышки по X (пина при перетаскивании) относительно общей ширины слайдера
+      $this.effectLevelValue = Math.round(100 * newCoordX / sliderWidth);
+
+      if ($this.effectLevelValue < 0) {
+        $this.effectLevelValue = 0;
+      } else if ($this.effectLevelValue > 100) {
+        $this.effectLevelValue = 100;
+      }
+      $this.effectLevelPin.style.left = `${$this.effectLevelValue}%`; // сместить ползунок на текущие расчетные координаты
+      $this.effectLevelDepth.style.width = `${$this.effectLevelValue}%`; // установить ширину полоски заполнения слайдера
+    };
+
+    let onMouseUp = function (upEvt) {
+      upEvt.preventDefault();
+
+      document.removeEventListener(`mousemove`, onMouseMove);
+      document.removeEventListener(`mouseup`, onMouseUp);
+
+      if (dragged) {
+        $this.setEffectLevel();
+      }
+    };
+
+    // Обработчик mousemove должен запускать логику изменения положения пина
+    document.addEventListener(`mousemove`, onMouseMove);
+    // При отпускании ползунка, записываем значение уровня насыщенности в соответствующий input
+    document.addEventListener(`mouseup`, onMouseUp);
+
   });
 
   // При клике по предпросмотру эффекта, применяем к картинке соответствующий
