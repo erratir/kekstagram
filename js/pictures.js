@@ -31,6 +31,16 @@ function Picture(i) {
 }
 
 /**
+ *  Функция возвращает массив с уникальными элементами
+ * Только в ES6 https://webformyself.com/kak-proizvesti-udalenie-dublej-massiva-v-es6/
+ * @param {array} arr
+ * @return {any[]}
+ */
+function returnUniqueArray(arr) {
+  return Array.from(new Set(arr));
+}
+
+/**
  * Функция возвращает случайное целое число между min и max, включая min, max как возможные значения
  * https://learn.javascript.ru/task/random-int-min-max
  * @param {number} min
@@ -315,6 +325,7 @@ PictureUploader.prototype.bindEvents = function () {
   this.bindPopupEvents();
   this.bindEffectEvents();
   this.bindResizeEvents();
+  this.validateForm();
 };
 
 /**
@@ -347,7 +358,7 @@ PictureUploader.prototype.bindPopupEvents = function () {
   /**
    * Закрываем попап. Если фокус находится в поле ввода хэш-тега (или в поле ввода комментария),
    * нажатие на Esc не должно приводить к закрытию формы редактирования изображения.
-    */
+   */
   window.addEventListener(`keydown`, function (evt) {
     if (evt.key === `Escape` &&
       $this.hashtagsInput !== document.activeElement &&
@@ -461,9 +472,43 @@ PictureUploader.prototype.bindResizeEvents = function () {
 };
 
 /**
- * --------------------------------------------- module4-task2 ---------------------------------------------
+ * ----------- module4-task2:  Валидация полей формы попапа `img-upload` / хэш-теги  -----------------
  */
+PictureUploader.prototype.validateForm = function () {
+  let $this = this;
 
+  this.customValidation = function (evt) {
+    evt.target.setCustomValidity(``);
+    let str = evt.target.value;
+    str = str.toLowerCase(); // SRS теги нечувствительны к регистру: #ХэшТег и #хэштег считаются одним и тем же тегом.
+    let arr = str.split(` `);
+
+    if (returnUniqueArray(arr).length === arr.length) { // проверка массива на уникальность и сравнение длинны с исходным массивом
+      if (arr.length > 5) {
+        evt.target.setCustomValidity(`Нельзя указать больше пяти хэш-тегов`);
+      } else {
+        arr.forEach(function (element) {
+
+          if (element.length >= 20) {
+            evt.target.setCustomValidity(`Хеш-тег должен быть короче 20 символов`);
+
+          } else if (element.indexOf(`#`) !== 0) {
+            evt.target.setCustomValidity(`Хеш-тег должен начинаться с символа #`);
+
+          } else if (element.length < 2) {
+            evt.target.setCustomValidity(`Хеш-тег не может состоять только из одной решётки`);
+
+          }
+        });
+      }
+    } else {
+      evt.target.setCustomValidity(`Один и тот же хэш-тег не может быть использован дважды`);
+    }
+  };
+
+  $this.hashtagsInput.addEventListener(`input`, this.customValidation);
+
+};
 
 /*
  * Основной код программы
