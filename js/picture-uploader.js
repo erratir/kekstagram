@@ -4,6 +4,7 @@
  * --------------------------------------------- module4-task1 ---------------------------------------------
  */
 (function () {
+
   /**
    *  Класс конструктор описывает редактор загружаемых изображений
    *  */
@@ -305,37 +306,62 @@
   PictureUploader.prototype.validateForm = function () {
     let $this = this;
 
+    /**
+     * Ф -я customValidation вызывается при каждом изменении поля с хештегами.
+     * Но если пользователь ввел и все стер (т.е. evt.target.value === ``), то ничего не делаем, т.к. поле не обязательное
+     * @param {event} evt
+     */
     this.customValidation = function (evt) {
-      evt.target.setCustomValidity(``);
+
+      evt.target.removeAttribute(`style`); // удалим стили (бордер-колор) присвоенные при предыдущем вызове
+
+      if (evt.target.value === ``) {
+        return;
+      }
+
+      let customValidityMsg = ``;
+
       let str = evt.target.value;
-      str = str.toLowerCase(); // SRS теги нечувствительны к регистру: #ХэшТег и #хэштег считаются одним и тем же тегом.
+      str = str.trim(); // Метод trim() возвращает строку с вырезанными пробельными символами с её концов.
+      str = str.toLowerCase(); // SRS: теги не чувствительны к регистру: #ХэшТег === #хэштег
+
       let arr = str.split(` `);
+
+      // Если между словами в строке больше 1 пробелла, то при split в массив добавляются пустые элементы
+      arr = arr.filter((element) => element !== ``); // Удалим пустые эл-ы массива.
 
       if (window.utils.returnUniqueArray(arr).length === arr.length) { // проверка массива на уникальность и сравнение длинны с исходным массивом
         if (arr.length > 5) {
-          evt.target.setCustomValidity(`Нельзя указать больше пяти хэш-тегов`);
+          customValidityMsg = `Нельзя указать больше пяти хэш-тегов`;
         } else {
           arr.forEach(function (element) {
 
             if (element.length >= 20) {
-              evt.target.setCustomValidity(`Хеш-тег должен быть короче 20 символов`);
+              customValidityMsg = `Хеш-тег должен быть короче 20 символов`;
 
             } else if (element.indexOf(`#`) !== 0) {
-              evt.target.setCustomValidity(`Хеш-тег должен начинаться с символа #`);
+              customValidityMsg = `Хеш-тег должен начинаться с символа #`;
 
             } else if (element.length < 2) {
-              evt.target.setCustomValidity(`Хеш-тег не может состоять только из одной решётки`);
+              customValidityMsg = `Хеш-тег не может состоять только из одной решётки`;
 
             }
           });
         }
       } else {
-        evt.target.setCustomValidity(`Один и тот же хэш-тег не может быть использован дважды`);
+        customValidityMsg = `Один и тот же хэш-тег не может быть использован дважды`;
+      }
+
+      evt.target.setCustomValidity(customValidityMsg);
+
+      if (customValidityMsg !== ``) { // если значение введенное в поле c хештегами не прошло валидацию
+        evt.target.style.borderColor = `red`; // подсветим поле ввода красным
+      } else {
+        evt.target.removeAttribute(`style`);
       }
     };
 
     $this.hashtagsInput.addEventListener(`input`, this.customValidation);
-
   };
 
   window.PictureUploader = PictureUploader;
