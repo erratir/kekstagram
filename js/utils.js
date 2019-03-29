@@ -46,6 +46,15 @@
       let element = document.createElement(tagName);
       element.classList.add(className);
       return element;
+    },
+
+    /**
+     * Ф-я обработчик ошибок, указываемая в качестве каллбека при запросах на серверр
+     * @param {string} message
+     */
+    onError(message) {
+      // выыод ошибки todo
+      window.console.log(message);
     }
 
   };
