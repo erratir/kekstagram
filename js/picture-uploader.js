@@ -9,7 +9,9 @@
    *  Класс конструктор описывает редактор загружаемых изображений
    *  */
   let PictureUploader = function () {
+    this.main = document.querySelector(`main`);
     this.element = document.querySelector(`.img-upload`);
+    this.form = this.element.querySelector(`.img-upload__form`);
     this.uploadOverlay = this.element.querySelector(`.img-upload__overlay`);
     this.uploadOverlayHideButton = this.element.querySelector(`.img-upload__cancel`);
     this.inputFile = this.element.querySelector(`#upload-file`);
@@ -29,6 +31,8 @@
     this.pictureDescription = this.element.querySelector(`.text__description`);
     this.EFFECT_DEFAULT_LEVEL_VALUE = 20; // значение по умолчанию - уровень эффекта
     this.effectLevelValue = this.EFFECT_DEFAULT_LEVEL_VALUE; // значение по умолчанию - уровень эффекта
+
+    this.successTemplate = document.querySelector(`#success`).content.querySelector(`.success`);
   };
 
   /**
@@ -81,7 +85,7 @@
    */
   PictureUploader.prototype.hide = function () {
     this.uploadOverlay.classList.add(`hidden`);
-    this.inputFile.value = ``;
+    this.form.reset(); // сбросить все поля формы по умолчанию
     this.picture.src = `img/upload-default-image.jpg`; // вернем картинку по умаолчанию
     this.picture.removeAttribute(`class`); // сбросим примененные ранее эфекты
     this.scaleControlInput.setAttribute(`value`, `100%`); // сбросить значение масштаба в инпут
@@ -155,6 +159,17 @@
         evt.preventDefault();
         $this.hide();
       }
+    });
+
+    // Обработчик на кнопку `Опубликовать` | отправка данных из формы на сервер
+    $this.form.addEventListener(`submit`, function (evt) {
+      evt.preventDefault();
+      // вторым параметром в ф-и window.backend.upload передаем ф-ю $this.successPopupEvents()
+      // обернутую в анонимную ф-ю, иначе теряется контент
+      window.backend.upload(new window.FormData($this.form), function (xhrResponse) {
+        $this.successPopupEvents(xhrResponse);
+      },
+      window.utils.onError);
     });
   };
 
@@ -362,6 +377,27 @@
     };
 
     $this.hashtagsInput.addEventListener(`input`, this.customValidation);
+  };
+
+  /**
+   * Cобытия успешной отправки фотографии
+   * @param {XMLHttpRequestResponseType} xhrResponse
+   */
+  PictureUploader.prototype.successPopupEvents = function (xhrResponse) {
+    this.hide(); // закрываем окно загрузки фотографии
+
+    // далее показываем окно `Изображение успешно загружено`
+    let successBlock = this.successTemplate.cloneNode(true);
+    this.main.appendChild(successBlock);
+
+    // document.querySelector(`.success__title`).textContent = `Изображение ${xhrResponse.filename.filename} успешно загружено`;
+
+    // Обработчик на кнопку `Круто!` - закрываем окно `Изображение успешно загружено`
+    let successButton = document.querySelector(`.success__button`);
+    successButton.addEventListener(`click`, function () {
+      document.querySelector(`.success`).remove();
+    },
+    {once: true}); // обработчик сработает разово
   };
 
   window.PictureUploader = PictureUploader;

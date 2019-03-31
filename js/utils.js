@@ -55,6 +55,20 @@
     onError(message) {
       // выыод ошибки todo
       window.console.log(message);
+    },
+
+    /**
+     * Функуия удаляет переданный ей HTMLElement со страницы.
+     * Если передан Event отменяет действие по умолчанию и прекращает его дальнейшее распространение
+     * @param {HTMLElement} element
+     * @param {Event} evt необязательный
+     */
+    removeHtmlElement(element, evt) {
+      if (evt) {
+        evt.stopPropagation();
+        evt.preventDefault();
+      }
+      element.remove();
     }
 
   };
