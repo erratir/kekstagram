@@ -33,6 +33,7 @@
     this.effectLevelValue = this.EFFECT_DEFAULT_LEVEL_VALUE; // значение по умолчанию - уровень эффекта
 
     this.successTemplate = document.querySelector(`#success`).content.querySelector(`.success`);
+    this.errorTemplate = document.querySelector(`#error`).content.querySelector(`.error`);
   };
 
   /**
@@ -164,12 +165,15 @@
     // Обработчик на кнопку `Опубликовать` | отправка данных из формы на сервер
     $this.form.addEventListener(`submit`, function (evt) {
       evt.preventDefault();
-      // вторым параметром в ф-и window.backend.upload передаем ф-ю $this.successPopupEvents()
+
+      // Вторым параметром в ф-и window.backend.upload передаем ф-ю $this.successImgUpload()
       // обернутую в анонимную ф-ю, иначе теряется контент
       window.backend.upload(new window.FormData($this.form), function (xhrResponse) {
-        $this.successPopupEvents(xhrResponse);
+        $this.successImgUpload(xhrResponse);
       },
-      window.utils.onError);
+      function (message) {
+        $this.errorImgUpload(message);
+      }); // Аналогично, оборачиваем в анонимную ф-ю
     });
   };
 
@@ -381,9 +385,10 @@
 
   /**
    * Cобытия успешной отправки фотографии
+   * Функция указывается в качестве коллбэка при отправке на сервер / backend -> onSuccess
    * @param {XMLHttpRequestResponseType} xhrResponse
    */
-  PictureUploader.prototype.successPopupEvents = function (xhrResponse) {
+  PictureUploader.prototype.successImgUpload = function (xhrResponse) {
     this.hide(); // закрываем окно загрузки фотографии
 
     // далее показываем окно `Изображение успешно загружено`
@@ -398,6 +403,26 @@
       document.querySelector(`.success`).remove();
     },
     {once: true}); // обработчик сработает разово
+  };
+
+  /**
+   * Cобытия в случае ошибок при отправке на сервер
+   * Функция указывается в качестве коллбэка при отправке на сервер / backend -> onError
+   * @param {string} message
+   */
+  PictureUploader.prototype.errorImgUpload = function (message) {
+    this.hide();
+    let errorBlock = this.errorTemplate.cloneNode(true);
+    this.main.appendChild(errorBlock);
+
+    document.querySelector(`.error__title`).textContent = message; //
+
+    let errorButons = document.querySelector(`.error__buttons`);
+
+    errorButons.addEventListener(`click`, function () {
+      document.querySelector(`.error`).remove();
+    });
+
   };
 
   window.PictureUploader = PictureUploader;
