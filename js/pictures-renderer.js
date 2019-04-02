@@ -54,14 +54,30 @@
   }
 
   /**
-   * 3. Отрисуйте сгенерированные DOM-элементы в блок .pictures. Для вставки элементов используйте DocumentFragment.
+   * Ф-я отриовывает сгенерированные DOM-элементы в блок .pictures. Для вставки элементов используйтся DocumentFragment.
+   * Если функцию вызвали с параметром, значит данные с сервера получены. Генерируем картинки на основе этих данных.
+   * Иначе генерируем картинке на основе моковых данных
+   * **
+   * JSON массив data, передаваемый сервером отличается по структуре от того, что формировали на предыдущих занятиях.
+   * Чтобы не переписывать код, просто с помощью map(),
+   * добавим в каждый объект используемые в коде параметры id и comentsCount
+   * @param {JSON} data не обязательный
    */
-  window.renderPictures = function () {
+  window.renderPictures = function (data) {
     let fragment = document.createDocumentFragment(); // создаем фрагмент документа, который хранится в памяти
 
-    for (let i = 0; i < window.data.DataPicture.COUNT; i++) {
-      pictures.push(new Picture(i)); // Добавляем в массив вновь сгенерированную картинку
-      fragment.appendChild(createCloneTemplate(pictures[i])); //  добавляем детей в фрагмент документа
+    if (data) {
+      pictures = data.map(function (element, index) {
+        element.id = index;
+        element.commentsCount = element.comments.length;
+        fragment.appendChild(createCloneTemplate(element)); //  добавляем детей в фрагмент документа
+        return element;
+      });
+    } else {
+      for (let i = 0; i < window.data.DataPicture.COUNT; i++) {
+        pictures.push(new Picture(i)); // Добавляем в массив вновь сгенерированную картинку
+        fragment.appendChild(createCloneTemplate(pictures[i])); //  добавляем детей в фрагмент документа
+      }
     }
     picturesList.appendChild(fragment); // Присоединяем фрагмент к основному дереву. В основном дереве фрагмент буден заменён собственными дочерними элементами.
   };

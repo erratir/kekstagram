@@ -39,13 +39,21 @@
       while (commentsList.firstChild) {
         commentsList.removeChild(commentsList.firstChild);
       }
+
       // генерим комеентарии к большой картинке вместо удаленных | можно как в проекте букинг было копировать
       for (let i = 0; i < picture.commentsCount; i++) {
         let li = window.utils.makeElement(`li`, `social__comment`);
         let imgAvatar = window.utils.makeElement(`img`, `social__picture`);
-        imgAvatar.src = `img/avatar-${window.utils.getRandomInRange(window.data.DataPicture.MIN_AVATAR_NUM, window.data.DataPicture.MAX_AVATAR_NUM)}.svg`;
         let textComment = window.utils.makeElement(`p`, `social__text`);
-        textComment.textContent = picture.comments[i];
+
+        /**
+         * Если данные получили с сервера, то берем их. (урл аватара и текст коммента)
+         * Если же массив pictures формировали сами (в предыдущих заданиях из моковых данных),
+         * то его структура несколько отличается. Генерим данные сами.
+         * Т.е. добавлением || оставим 2 варианта кода
+          */
+        imgAvatar.src = (picture.comments[i].avatar) || (`img/avatar-${window.utils.getRandomInRange(window.data.DataPicture.MIN_AVATAR_NUM, window.data.DataPicture.MAX_AVATAR_NUM)}.svg`);
+        textComment.textContent = picture.comments[i].message || picture.comments[i];
         li.appendChild(imgAvatar);
         li.appendChild(textComment);
         fragment.appendChild(li);
