@@ -99,11 +99,10 @@
    * @param {Function} cb callback(err, base64image)
    */
   PictureUploader.prototype.loadImage = function (file, cb) {
-    if (file.type.indexOf(`image/`) !== 0) {
+    if (!file.type.match(/image.*/)) {
       cb(new Error(`FILE_NOT_IMAGE`));
       return;
     }
-
     cb(null, window.URL.createObjectURL(file));
   };
 
@@ -127,7 +126,7 @@
    */
   PictureUploader.prototype.bindPopupEvents = function () {
     let $this = this;
-    // Открываем попап
+    // Открываем попап / загрузка изображения
     this.inputFile.addEventListener(`change`, function (evt) {
       evt.preventDefault();
       if ($this.inputFile.files.length > 0) {
