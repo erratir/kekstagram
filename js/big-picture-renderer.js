@@ -17,6 +17,7 @@
    * @param {object} picture
    */
   window.BigPictureRender = {
+    body: document.querySelector(`body`),
     element: document.querySelector(`.big-picture`),
     renderPreview(picture) {
       this.element.querySelector(`.big-picture__img img`).src = picture.url;
@@ -64,9 +65,11 @@
       this.renderPreview(picture);
       this.renderComments(picture);
       this.element.classList.remove(`hidden`);
+      this.body.classList.add(`modal-open`);
     },
     hide() {
       this.element.classList.add(`hidden`);
+      this.body.classList.remove(`modal-open`);
     },
     bindEvents() {
       let $this = this;
