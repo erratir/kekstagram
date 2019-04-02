@@ -19,26 +19,21 @@
   window.BigPictureRender = {
     body: document.querySelector(`body`),
     element: document.querySelector(`.big-picture`),
+    commentsList: document.querySelector(`.social__comments`),
+    loadCommentsButton: document.querySelector(`.comments-loader`),
+    commentCount: document.querySelector(`.social__comment-count`),
     renderPreview(picture) {
       this.element.querySelector(`.big-picture__img img`).src = picture.url;
       this.element.querySelector(`.social__header .social__caption`).textContent = picture.description;
       this.element.querySelector(`.likes-count`).textContent = picture.likes;
       this.element.querySelector(`.comments-count`).textContent = picture.commentsCount;
-
-      /**
-       * 5.  Спрячьте блоки счётчика комментариев .social__comment-count и загрузки
-       новых комментариев .comments-loader, добавив им класс .visually-
-       hidden.
-       */
-      this.element.querySelector(`.social__comment-count`).classList.add(`visually-hidden`);
-      this.element.querySelector(`.comments-loader`).classList.add(`visually-hidden`);
     },
     renderComments(picture) {
       let fragment = document.createDocumentFragment();
-      let commentsList = this.element.querySelector(`.social__comments`);
+
       // 2 первых комента прописанны в HTML | Удалим все <li>
-      while (commentsList.firstChild) {
-        commentsList.removeChild(commentsList.firstChild);
+      while (this.commentsList.firstChild) {
+        this.commentsList.removeChild(this.commentsList.firstChild);
       }
 
       // генерим комеентарии к большой картинке вместо удаленных | можно как в проекте букинг было копировать
@@ -52,23 +47,28 @@
          * Если же массив pictures формировали сами (в предыдущих заданиях из моковых данных),
          * то его структура несколько отличается. Генерим данные сами.
          * Т.е. добавлением || оставим 2 варианта кода
-          */
+         */
         imgAvatar.src = (picture.comments[i].avatar) || (`img/avatar-${window.utils.getRandomInRange(window.data.DataPicture.MIN_AVATAR_NUM, window.data.DataPicture.MAX_AVATAR_NUM)}.svg`);
         textComment.textContent = picture.comments[i].message || picture.comments[i];
         li.appendChild(imgAvatar);
         li.appendChild(textComment);
+        if (i > 4) { // Оставим только 5 комментов, остальные если их больше спрячем
+          li.classList.add(`visually-hidden`);
+          this.loadCommentsButton.classList.remove(`visually-hidden`); // покажем кнопку "загрузить еще"
+          this.commentCount.classList.remove(`visually-hidden`); // покажем кол-во комментов
+        }
         fragment.appendChild(li);
       }
-      commentsList.appendChild(fragment);
+      this.commentsList.appendChild(fragment);
     },
     show(picture) {
       this.renderPreview(picture);
       this.renderComments(picture);
-      this.element.classList.remove(`hidden`);
+      this.element.classList.remove(`hidden`); // показать элемент БольшаяКартинка
       this.body.classList.add(`modal-open`);
     },
     hide() {
-      this.element.classList.add(`hidden`);
+      this.element.classList.add(`hidden`); // скрыть элемент БольшаяКартинка
       this.body.classList.remove(`modal-open`);
     },
     bindEvents() {
@@ -78,18 +78,30 @@
       }
       this.__eventsBinded__ = true;
 
+      // обработчик на кнопку `крестик` / закрыть попап
       this.element.querySelector(`.big-picture__cancel`).addEventListener(`click`, function (evt) {
         evt.preventDefault();
         evt.stopPropagation();
         $this.hide();
       });
 
+      // обработчик на Esc / закрыть попап
       window.addEventListener(`keydown`, function (evt) {
         if (evt.key === `Escape`) {
           evt.preventDefault();
 
           $this.hide();
         }
+      });
+
+      // Обработчик на кнопку "загрузить еще" для комментариев
+      this.loadCommentsButton.addEventListener(`click`, function () {
+        let hiddenComments = Array.from($this.commentsList.getElementsByClassName(`visually-hidden`));
+        hiddenComments.forEach(function (element) {
+          element.classList.remove(`visually-hidden`); // показать скрытые коменты
+          $this.loadCommentsButton.classList.add(`visually-hidden`); // скрыть кнопку "загрузить еще"
+          $this.commentCount.classList.add(`visually-hidden`); // скрыть счетчик комментариев
+        });
       });
     }
   };
