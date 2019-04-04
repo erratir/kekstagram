@@ -7,10 +7,10 @@
    */
   window.backend.load(function (response) {
     window.data.ServerData = response;
-    window.renderPictures(response);
+    window.createPicturesArray(response);
   }, function (message) {
     window.console.log(message); // todo написать обработчик ошибок
-    window.renderPictures();
+    window.createPicturesArray();
   });
 
   let pictureUploader = new window.PictureUploader();

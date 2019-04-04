@@ -5,6 +5,67 @@
   let pictures = [];
 
   /**
+   * Объект описывающий фильтры для изображений от других пользователей
+   * @type {object}
+   * Популярные — фотографии в изначальном порядке. -> Хотя я бы сделал по кол-ву лайков, но SRS 5.1.
+   * Новые — 10 случайных, не повторяющихся фотографий.
+   * Обсуждаемые — фотографии, отсортированные в порядке убывания количества комментариев
+   */
+  let imgFilters = {
+    element: document.querySelector(`.img-filters`),
+    buttonPopular: document.querySelector(`#filter-popular`),
+    buttonNew: document.querySelector(`#filter-new`),
+    buttonDiscussed: document.querySelector(`#filter-discussed`),
+    showFilters() {
+      this.element.classList.remove(`img-filters--inactive`);
+    },
+    hideFilters() {
+      this.element.classList.add(`img-filters--inactive`);
+    },
+    sort(filter) {
+      let sortArray = [...pictures]; // просто коппировать массив через `=` нельзя
+
+      // удалим класс `.img-filters__button--active` у кнопки активной на данный момент
+      this.element.querySelector(`.img-filters__button--active`).classList.remove(`img-filters__button--active`);
+
+      if (filter === `New`) { // 10 случайных, не повторяющихся фотографий
+        sortArray = window.utils.shuffle(sortArray); // случайно перемешаем массив
+        sortArray = sortArray.slice(0, 10); // возьмем 10 элемментов
+      } else if (filter === `Discussed`) { // суждаемые — фотографии, отсортированные в порядке убывания количества комментариев
+        sortArray = sortArray.sort(function (a, b) {
+          return parseInt(b.commentsCount, 10) - parseInt(a.commentsCount, 10);
+        });
+      }
+
+      // удалим все ранее сгенерированные картики
+      while (picturesList.querySelector(`.picture`)) {
+        picturesList.removeChild(picturesList.querySelector(`.picture`));
+      }
+
+      renderPictures(sortArray); // и отрисуем
+
+      this[`button${filter}`].classList.add(`img-filters__button--active`);
+      return sortArray;
+    },
+    bindEvents() {
+      if (this.__eventsBinded__) {
+        return;
+      }
+      this.__eventsBinded__ = true;
+      let $this = this;
+      this.buttonPopular.addEventListener(`click`, function () {
+        $this.sort(`Popular`);
+      });
+      this.buttonNew.addEventListener(`click`, function () {
+        $this.sort(`New`);
+      });
+      this.buttonDiscussed.addEventListener(`click`, function () {
+        $this.sort(`Discussed`);
+      });
+    },
+  };
+
+  /**
    * Функция генерирует массив случайных комментариев
    * @param {number} commentsCount
    * @return {Array}
@@ -54,32 +115,48 @@
   }
 
   /**
-   * Ф-я отриовывает сгенерированные DOM-элементы в блок .pictures. Для вставки элементов используйтся DocumentFragment.
+   * Функция создает массив картинок
    * Если функцию вызвали с параметром, значит данные с сервера получены. Генерируем картинки на основе этих данных.
    * Иначе генерируем картинке на основе моковых данных
    * **
    * JSON массив data, передаваемый сервером отличается по структуре от того, что формировали на предыдущих занятиях.
    * Чтобы не переписывать код, просто с помощью map(),
    * добавим в каждый объект используемые в коде параметры id и comentsCount
-   * @param {JSON} data не обязательный
+   * @param {array} data - массив объектов в фомате JSON /не обязательный/
    */
-  window.renderPictures = function (data) {
-    let fragment = document.createDocumentFragment(); // создаем фрагмент документа, который хранится в памяти
+  window.createPicturesArray = function (data) {
 
     if (data) {
       pictures = data.map(function (element, index) {
         element.id = index;
         element.commentsCount = element.comments.length;
-        fragment.appendChild(createCloneTemplate(element)); //  добавляем детей в фрагмент документа
         return element;
       });
     } else {
       for (let i = 0; i < window.data.DataPicture.COUNT; i++) {
         pictures.push(new Picture(i)); // Добавляем в массив вновь сгенерированную картинку
-        fragment.appendChild(createCloneTemplate(pictures[i])); //  добавляем детей в фрагмент документа
       }
     }
+    renderPictures();
+  };
+
+  /**
+   * Ф-я отриовывает сгенерированные DOM-элементы в блок .pictures. Для вставки элементов используйтся DocumentFragment.
+   * @param {array} arr - массив объектов
+   */
+  let renderPictures = function (arr) {
+    if (!arr) { // если вызвали функцию без параметров, то отображаем массив картинок в исходном варианте
+      arr = pictures;
+    }
+    let fragment = document.createDocumentFragment(); // создаем фрагмент документа, который хранится в памяти
+
+    arr.forEach(function (element) {
+      fragment.appendChild(createCloneTemplate(element));
+    });
+
     picturesList.appendChild(fragment); // Присоединяем фрагмент к основному дереву. В основном дереве фрагмент буден заменён собственными дочерними элементами.
+    imgFilters.showFilters();
+    imgFilters.bindEvents();
   };
 
   /**
