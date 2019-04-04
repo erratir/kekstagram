@@ -165,14 +165,15 @@
     $this.form.addEventListener(`submit`, function (evt) {
       evt.preventDefault();
 
-      // Вторым параметром в ф-и window.backend.upload передаем ф-ю $this.successImgUpload()
-      // обернутую в анонимную ф-ю, иначе теряется контент
-      window.backend.upload(new window.FormData($this.form), function (xhrResponse) {
-        $this.successImgUpload(xhrResponse);
-      },
-      function (message) {
-        $this.errorImgUpload(message);
-      }); // Аналогично, оборачиваем в анонимную ф-ю
+      /**
+       *  В качестве параметров в ф-ю window.backend.upload передаем  -> ф-ии $this.successImgUpload и $this.errorImgUpload
+       *  Т.к. эти ф-ии используются в качестве колбека и будут вызываться из обработчика слушающего ответ сервера,
+       *  то контекст (текущий объект) будет утерян. Привязываем контекст с помощью bind()
+       */
+      window.backend.upload(new window.FormData($this.form),
+          $this.successImgUpload.bind($this),
+          $this.errorImgUpload.bind($this)
+      );
     });
   };
 
