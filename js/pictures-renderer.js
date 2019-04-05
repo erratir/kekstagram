@@ -22,16 +22,16 @@
     hideFilters() {
       this.element.classList.add(`img-filters--inactive`);
     },
-    sort(filter) {
+    sortImg(evt) {
       let sortArray = [...pictures]; // просто коппировать массив через `=` нельзя
 
       // удалим класс `.img-filters__button--active` у кнопки активной на данный момент
       this.element.querySelector(`.img-filters__button--active`).classList.remove(`img-filters__button--active`);
 
-      if (filter === `New`) { // 10 случайных, не повторяющихся фотографий
+      if (evt.target.id === `filter-new`) { // 10 случайных, не повторяющихся фотографий
         sortArray = window.utils.shuffle(sortArray); // случайно перемешаем массив
         sortArray = sortArray.slice(0, 10); // возьмем 10 элемментов
-      } else if (filter === `Discussed`) { // суждаемые — фотографии, отсортированные в порядке убывания количества комментариев
+      } else if (evt.target.id === `filter-discussed`) { // обсуждаемые — фотографии, отсортированные в порядке убывания количества комментариев
         sortArray = sortArray.sort(function (a, b) {
           return parseInt(b.commentsCount, 10) - parseInt(a.commentsCount, 10);
         });
@@ -44,7 +44,7 @@
 
       renderPictures(sortArray); // и отрисуем
 
-      this[`button${filter}`].classList.add(`img-filters__button--active`);
+      evt.target.classList.add(`img-filters__button--active`);
     },
     bindEvents() {
       if (this.__eventsBinded__) {
@@ -52,22 +52,10 @@
       }
       this.__eventsBinded__ = true;
       let $this = this;
-      // обработчик на кнопку `популярные` / с устранением дребезга - debounce
-      this.buttonPopular.addEventListener(`click`, function () {
+      // обработчик на кнопки `популярные`, `новые`, `обсуждаемые` / с устранением дребезга - debounce
+      this.element.addEventListener(`click`, function (evt) {
         window.debounce(function () {
-          $this.sort(`Popular`);
-        }, 300);
-      });
-      // обработчик на кнопку `Новые` / с устранением дребезга - debounce
-      this.buttonNew.addEventListener(`click`, function () {
-        window.debounce(function () {
-          $this.sort(`New`);
-        }, 300);
-      });
-      // обработчик на кнопку `обсуждаемые` / с устранением дребезга - debounce
-      this.buttonDiscussed.addEventListener(`click`, function () {
-        window.debounce(function () {
-          $this.sort(`Discussed`);
+          $this.sortImg(evt);
         }, 300);
       });
     },
