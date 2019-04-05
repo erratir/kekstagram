@@ -45,7 +45,6 @@
       renderPictures(sortArray); // и отрисуем
 
       this[`button${filter}`].classList.add(`img-filters__button--active`);
-      return sortArray;
     },
     bindEvents() {
       if (this.__eventsBinded__) {
@@ -53,14 +52,23 @@
       }
       this.__eventsBinded__ = true;
       let $this = this;
+      // обработчик на кнопку `популярные` / с устранением дребезга - debounce
       this.buttonPopular.addEventListener(`click`, function () {
-        $this.sort(`Popular`);
+        window.debounce(function () {
+          $this.sort(`Popular`);
+        }, 300);
       });
+      // обработчик на кнопку `Новые` / с устранением дребезга - debounce
       this.buttonNew.addEventListener(`click`, function () {
-        $this.sort(`New`);
+        window.debounce(function () {
+          $this.sort(`New`);
+        }, 300);
       });
+      // обработчик на кнопку `обсуждаемые` / с устранением дребезга - debounce
       this.buttonDiscussed.addEventListener(`click`, function () {
-        $this.sort(`Discussed`);
+        window.debounce(function () {
+          $this.sort(`Discussed`);
+        }, 300);
       });
     },
   };
